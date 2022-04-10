@@ -1,0 +1,170 @@
+---
+title: "Votos na Flórida, eleição do ano 2000."
+output: 
+  html_document:
+    toc: true
+---
+
+Esta tabela foi retirada do pacote carData, contendo vários  bancos de dados.
+
+O banco de dados foi escolhido, ao acaso. Ele corresponde às eleições presidenciais americanas de 2000, mais especificamente no estado da Flórida.
+
+Percebi que se tratava da contagem de votos, quando prestei atenção no nome das colunas.
+
+Logo me veio à memória a primeira vez que ouvi sobre aquecimento global, no documentário do [Gore](https://www.youtube.com/watch?v=Qm6_H2G73p8). E como o presidente [Bush](https://en.wikipedia.org/wiki/Public_image_of_George_W._Bush) dos EUA, no meu período de infância, parecia ser muito odiado.
+
+Dito isso, vamos fazer uma análise rápida destes dados.
+
+
+
+```{r}
+knitr::opts_chunk$set(
+  fig.width = 10, fig.height = 6, 	tidy=TRUE,message = F, warning = F,	tidy.opts=list(arrow=TRUE,	indent=2))
+```
+
+# Pacotes utilizados
+```{r}
+library(tidyverse)
+library(knitr)
+library(rmarkdown)
+```
+
+# Transformação dos dados
+
+A tabela da Flórida da biblioteca `carData` será usada como fonte.
+
+```{r}
+florida = carData::Florida
+kable(head(florida,5))
+```
+
+Irei transformar as linhas em uma coluna chamada município, para se tornar o mais próximo do formato `tidy`.
+
+
+```{r}
+# Acrescentei uma coluna municipio
+florida$Municipios=rownames(florida) 
+
+#A coloquei em primeiro
+florida=florida %>% select (Municipios, everything())
+
+#Converter o dataframe em um tidy
+florida= as_tibble(florida)
+
+#Mostrar como uma tabela bonitinha
+kable(head(florida,5), caption='Votos por Município na Florida')
+```
+
+# Gráficos
+
+Depois de muita luta, organizar os 10 municípios que mais votam em:
+
+
+
+
+# Número de Votos  {.tabset}
+
+
+## Gore
+```{r}
+florida %>% top_n(10,GORE)  %>% ggplot(aes(y=GORE ,x=reorder(Municipios, -GORE))) + geom_bar(stat = "identity")
+
+```
+
+## Bush
+```{r}
+florida %>% top_n(10,BUSH)  %>% ggplot(aes(y=BUSH ,x=reorder(Municipios, -BUSH))) + geom_bar(stat = "identity")
+```
+
+
+## Total
+```{r}
+florida %>% top_n(10,Total)  %>% ggplot(aes(y=Total ,x=reorder(Municipios, -Total))) + geom_bar(stat = "identity") 
+
+florida %>% top_n(-10,Total)  %>% ggplot(aes(y=Total ,x=reorder(Municipios, Total))) + geom_bar(stat = "identity")
+```
+
+## {-}
+
+# Porcentagem de votos por município
+
+Ele será feito com as porcentagem por município
+
+
+```{r}
+# A linha estudada será definidada por n
+n=50
+```
+
+```{r}
+#Selecionar os valores das colunas, exceto a coluna município e  total
+
+tf=as.integer(florida[n,2:(ncol(florida)-1)]) 
+
+# Os dois primerios canditados são muito mais expressivos que os outros
+# Por issso irei somar o valor dos restantes
+
+soma=sum(tf[3:length(tf)])
+
+#Preciso conseguir o nome dos canditados para formar as labels
+nomes=colnames(florida)[2:(ncol(florida)-1)]
+
+#Faço o grafico de pizza
+pie(x=c(tf[1:2],soma), labels = c(nomes[1:2],'outros'),col=rainbow(3), main=paste('Votos em ',florida[n,1]))
+
+
+
+
+```
+
+# Qualquer ordem
+
+O primeiro gráfico está enviesado para colocar sempre o nome de Bush ou Gore. Nestes casos não é o problema, pois ambos disputaram o primeiro e segundo lugar em todos os municípios.
+
+Mas será que conseguiríamos fazer, a porcentagem de votos funcionasse para qualquer caso?
+
+
+```{r}
+#Qual linha vc quer saber
+#n=11
+#Selecionar linha desejada e os valores das colunas, exceto a coluna total
+
+tf=as.integer(florida[n,2:(ncol(florida)-1)])
+tf
+
+# Os dois primerios canditados são muito mais expressivos que os outros
+# Por issso irei somar o valor dos restantes, os colocando em ordem
+# E tire os dois maiores valores pra somar o restante 
+
+soma=sum(sort(tf[3:length(tf)]))
+
+#Neste caso, nao faz diferença, mas qual usar?
+#sort(tf[3:length(tf)])
+#tf[3:length(sort(tf))]
+
+
+
+#Preciso conseguir o nome dos canditados para formar as labels
+#Irei reordenar os nomes, dependendo doa valores de tf como referencia
+#Como eles viram fatores
+#Eu os pego noa sua ordem de significância
+nomes=levels(reorder(colnames(florida)[2:(ncol(florida)-1)],-tf))
+
+#Para facilitar na construção de gráfico, eu irei ordenar os dois primeiros valores de tf em uma variavel
+ordem=sort(tf[1:2],decreasing = T)
+#Faço o grafico de pizza
+pie(x=c(ordem,soma), labels = c(nomes[1:2],'outros'),col=rainbow(3), main=paste('Votos em', florida[n,1]))
+```
+
+# O que aprendemos?
+
+A disputa foi realmente acirrada em relação aos dois  candidatos, Gore e Bush. E segundo informações da época, a Flórida foi o Estado decisivo para o rumo da eleição.
+
+Uma coisa que também aprendi com esse pequeno projeto é... E consigo fazer uma análise simplificada :D
+
+E que gráficos de pizza não são tão ruins, como aparenemente algumas fontes acaham, na verdade são ótimos para se tirar conclusões rápidas. Como:
+
+- A diferença entre Bush e Gore não foi tão alta.
+- Os outros candidatos não chegaram perto dos dois primeiros.
+
+Bem pessoal, até a próxima.

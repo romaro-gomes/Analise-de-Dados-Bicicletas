@@ -1,0 +1,19 @@
+---
+title: "Portifólio Análise de Dados"
+author: "Romario Gomes"
+date: "Última atualização: `r format(Sys.Date(), '%d/%m/%y')` "
+output: html_document
+---
+
+```{r, include= FALSE}
+library(rmarkdown)
+```
+
+```{r, include= FALSE}
+Florida <- render("./Florida/carData_florida.Rmd","html_document")
+```
+
+Projetos
+
+[Votos na Flórida, eleição do ano 2000](./Florida/carData_florida.html)
+[Bicicletas](./Bicicletas/bicicletas.html)
